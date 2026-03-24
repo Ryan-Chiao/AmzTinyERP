@@ -30,6 +30,7 @@ app.use('/api/inventory', require('./routes/inventory'));
 app.use('/api/orders', require('./routes/orders'));
 app.use('/api/dashboard', require('./routes/dashboard'));
 app.use('/api/sync', require('./routes/sync'));
+app.use('/api/pricing', require('./routes/pricing'));
 
 // ── 全局错误处理 ──────────────────────────────────────────
 // eslint-disable-next-line no-unused-vars

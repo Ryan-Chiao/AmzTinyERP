@@ -19,6 +19,10 @@ model Product {
   // 价格（当前快照价，仅存最新值；历史价格追踪属 Phase 2 定价模块）
   price              Decimal  @db.Decimal(10, 2)
 
+  // 定价保护范围（Phase 2，用户设置；只做建议不自动改价）
+  priceFloor         Decimal? @db.Decimal(10, 2)  // 最低保护价
+  priceCeiling       Decimal? @db.Decimal(10, 2)  // 最高保护价
+
   // FBA 库存
   fbaAvailable       Int      @default(0) // 可售数量
   fbaInbound         Int      @default(0) // 在途数量

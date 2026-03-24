@@ -18,13 +18,7 @@ const menuItems = [
   { key: '/', icon: <DashboardOutlined />, label: '总览' },
   { key: '/inventory', icon: <InboxOutlined />, label: '库存管理' },
   { key: '/orders', icon: <ShoppingOutlined />, label: '订单管理' },
-  {
-    key: '/pricing',
-    icon: <TagOutlined />,
-    label: '定价补货',
-    disabled: true,
-    title: '即将上线',
-  },
+  { key: '/pricing', icon: <TagOutlined />, label: '定价补货' },
   {
     key: '/ads',
     icon: <BarChartOutlined />,
