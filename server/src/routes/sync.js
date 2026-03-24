@@ -22,7 +22,6 @@ router.post('/trigger', async (req, res, next) => {
     if (isMock) {
       // Simulate sync delay
       await new Promise((resolve) => setTimeout(resolve, 500));
-
       const log = {
         id: `sync_${Date.now()}`,
         module: module.toUpperCase(),
@@ -33,12 +32,23 @@ router.post('/trigger', async (req, res, next) => {
         durationMs: 500,
         createdAt: new Date().toISOString(),
       };
-
       return res.json({ success: true, log });
     }
 
-    // Real mode — not yet implemented
-    return res.status(501).json({ error: 'SP-API sync not yet implemented', code: 'NOT_IMPLEMENTED' });
+    // Real mode — call syncService
+    const syncService = require('../services/syncService');
+    const mod = module.toUpperCase();
+    let result;
+
+    if (mod === 'INVENTORY') {
+      result = await syncService.syncInventory();
+    } else if (mod === 'ORDERS') {
+      result = await syncService.syncOrders();
+    } else {
+      result = await syncService.syncAll();
+    }
+
+    return res.json({ success: true, result });
   } catch (err) {
     next(err);
   }

@@ -34,4 +34,7 @@ app.use((err, req, res, next) => {
 // ── 启动服务 ──────────────────────────────────────────────
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT} — Mock mode: ${isMock}`);
+  // 启动定时同步任务（USE_MOCK=false 时生效）
+  const { startScheduler } = require('./scheduler');
+  startScheduler();
 });
