@@ -1,10 +1,20 @@
 require('dotenv').config();
+
+// ── 全局错误保护（防止 SP-API 未配置时 unhandled rejection 崩溃进程）──
+process.on('unhandledRejection', (reason) => {
+  console.error('[UnhandledRejection] Caught:', reason?.message || reason);
+});
+process.on('uncaughtException', (err) => {
+  console.error('[UncaughtException] Caught:', err.message);
+});
+
 const express = require('express');
 const cors = require('cors');
 
 const app = express();
 const PORT = process.env.PORT || 3002;
 const isMock = process.env.USE_MOCK === 'true';
+
 
 // ── 中间件 ────────────────────────────────────────────────
 app.use(cors({ origin: 'http://localhost:5173' }));
