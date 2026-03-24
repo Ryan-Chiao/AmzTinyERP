@@ -83,8 +83,10 @@ function getDashboardStats() {
 
 /**
  * 图表数据（从 DB 聚合，不直接调 SP-API）
+ * @param {'revenue'|'netRevenue'|'quantity'} metric
+ * @param {7|30} days
  */
-function getChartData() {
+function getChartData(_metric, _days) {
   throw new Error('getChartData: 请直接用 Prisma 从 DB 聚合，不走 SP-API');
 }
 
@@ -187,6 +189,14 @@ async function getInventorySnapshots(asin, days = 30) {
   return { asin, snapshots };
 }
 
+/**
+ * 热销 TOP10 stub（Phase 3 用 DB 聚合实现）
+ * @param {'child'|'parent'} groupBy
+ */
+function getTopAsins(_groupBy) {
+  throw new Error('getTopAsins: Phase 3 用 Prisma OrderItem 聚合实现');
+}
+
 module.exports = {
   getInventory,
   getOrders,
@@ -197,4 +207,5 @@ module.exports = {
   getRestockSuggestion,
   updateProduct,
   getInventorySnapshots,
+  getTopAsins,
 };

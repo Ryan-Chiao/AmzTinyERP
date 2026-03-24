@@ -52,48 +52,75 @@ router.get('/stats', async (req, res, next) => {
   }
 });
 
-// GET /api/dashboard/chart-data
-// Returns last 7 days order trend data
+// GET /api/dashboard/chart-data?metric=revenue&days=7
 router.get('/chart-data', async (req, res, next) => {
   try {
-    // Mock 模式直接用 service
+    const metric = ['revenue', 'netRevenue', 'quantity'].includes(req.query.metric)
+      ? req.query.metric : 'revenue';
+    const days = [7, 30].includes(Number(req.query.days))
+      ? Number(req.query.days) : 7;
+
     if (isMock) {
-      const data = service.getChartData();
+      const data = service.getChartData(metric, days);
       return res.json({ data });
     }
 
-    // 真实模式：从 DB 按天聚合近 7 天订单数
-    const sevenDaysAgo = new Date();
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
-    sevenDaysAgo.setHours(0, 0, 0, 0);
+    // 真实模式：从 DB 按天聚合
+    const since = new Date();
+    since.setDate(since.getDate() - (days - 1));
+    since.setHours(0, 0, 0, 0);
 
     const orders = await prisma.order.findMany({
-      where: { purchaseDate: { gte: sevenDaysAgo } },
-      select: { purchaseDate: true },
+      where: { purchaseDate: { gte: since } },
+      select: { purchaseDate: true, totalAmount: true },
     });
 
-    // 生成近7天日期 map
     const dateMap = {};
-    for (let i = 6; i >= 0; i--) {
+    for (let i = days - 1; i >= 0; i--) {
       const d = new Date();
       d.setDate(d.getDate() - i);
       const key = `${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-      dateMap[key] = 0;
+      dateMap[key] = { revenue: 0, quantity: 0 };
     }
 
-    // 统计每天订单数
     orders.forEach(o => {
       const d = new Date(o.purchaseDate);
       const key = `${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-      if (key in dateMap) dateMap[key]++;
+      if (key in dateMap) {
+        dateMap[key].revenue += parseFloat(o.totalAmount);
+        dateMap[key].quantity++;
+      }
     });
 
-    const orderTrend = Object.entries(dateMap).map(([date, count]) => ({ date, orders: count }));
+    const series = Object.entries(dateMap).map(([date, v]) => ({
+      date,
+      value: metric === 'netRevenue' ? null
+           : metric === 'quantity'   ? v.quantity
+           : parseFloat(v.revenue.toFixed(2)),
+    }));
 
-    res.json({ data: { orderTrend } });
+    res.json({ data: { metric, days, series } });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// GET /api/dashboard/top-asins?groupBy=child
+router.get('/top-asins', async (req, res, next) => {
+  try {
+    const groupBy = req.query.groupBy === 'parent' ? 'parent' : 'child';
+
+    if (isMock) {
+      const data = service.getTopAsins(groupBy);
+      return res.json({ data });
+    }
+
+    // 真实模式：stub（Phase 3 实现）
+    res.json({ data: [] });
   } catch (err) {
     next(err);
   }
 });
 
 module.exports = router;
+

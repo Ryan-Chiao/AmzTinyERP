@@ -18,5 +18,9 @@ export const getOrderDetail = (orderId) =>
 export const triggerSync = (module) =>
   apiClient.post('/sync/trigger', { module }).then((r) => r.data);
 
-export const getChartData = () =>
-  apiClient.get('/dashboard/chart-data').then((r) => r.data);
+export const getChartData = (params = {}) =>
+  apiClient.get('/dashboard/chart-data', { params }).then((r) => r.data);
+
+export const getTopAsins = (params = {}) =>
+  apiClient.get('/dashboard/top-asins', { params }).then((r) => r.data);
+

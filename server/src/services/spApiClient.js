@@ -1,6 +1,7 @@
 /**
  * spApiClient.js
  * Axios 实例，自动附加 SP-API Access Token，支持：
+ *  - 三模式切换：USE_MOCK > USE_SANDBOX > 生产
  *  - 401 时自动静默刷新 Token 并重试一次
  *  - 429 时指数退避重试（最多 3 次：1s / 2s / 4s）
  *  - 并发限制：同时最多 2 个请求，超出后等待（最多 10 次 × 500ms）
@@ -8,7 +9,31 @@
 
 const axios = require('axios');
 
-const LWA_TOKEN_URL = 'https://api.amazon.com/auth/o2/token';
+// ─── 三模式配置 ────────────────────────────────────────────────
+const IS_MOCK    = process.env.USE_MOCK    === 'true';
+const IS_SANDBOX = process.env.USE_SANDBOX === 'true';
+
+const BASE_URL = IS_MOCK
+  ? null  // Mock 模式不发真实请求
+  : IS_SANDBOX
+    ? 'https://sandbox.sellingpartnerapi-na.amazon.com'
+    : (process.env.SP_API_ENDPOINT || 'https://sellingpartnerapi-na.amazon.com');
+
+const LWA_ENDPOINT = 'https://api.amazon.com/auth/o2/token';
+
+// 凭证选择：沙盘用沙盘凭证，生产用生产凭证
+const CLIENT_ID     = IS_SANDBOX ? process.env.SP_API_SANDBOX_CLIENT_ID     : process.env.SP_API_CLIENT_ID;
+const CLIENT_SECRET = IS_SANDBOX ? process.env.SP_API_SANDBOX_CLIENT_SECRET : process.env.SP_API_CLIENT_SECRET;
+const REFRESH_TOKEN = IS_SANDBOX ? process.env.SP_API_SANDBOX_REFRESH_TOKEN : process.env.SP_API_REFRESH_TOKEN;
+
+// 启动日志
+if (IS_MOCK) {
+  console.log('[模式] Mock 模式（离线）');
+} else if (IS_SANDBOX) {
+  console.log('[模式] SP-API 沙盘模式');
+} else {
+  console.log('[模式] SP-API 生产模式');
+}
 
 let cachedToken = null;
 let tokenExpiresAt = 0;
@@ -39,19 +64,17 @@ async function getAccessToken() {
     return cachedToken;
   }
 
-  const { SP_API_CLIENT_ID, SP_API_CLIENT_SECRET, SP_API_REFRESH_TOKEN } = process.env;
-
-  if (!SP_API_CLIENT_ID || !SP_API_CLIENT_SECRET || !SP_API_REFRESH_TOKEN) {
-    throw new Error('SP-API 凭证未配置，请检查 .env 中的 SP_API_CLIENT_ID / SP_API_CLIENT_SECRET / SP_API_REFRESH_TOKEN');
+  if (!CLIENT_ID || !CLIENT_SECRET || !REFRESH_TOKEN) {
+    throw new Error('SP-API 凭证未配置，请检查 .env 中的凭证字段');
   }
 
   const res = await axios.post(
-    LWA_TOKEN_URL,
+    LWA_ENDPOINT,
     new URLSearchParams({
-      grant_type: 'refresh_token',
-      refresh_token: SP_API_REFRESH_TOKEN,
-      client_id: SP_API_CLIENT_ID,
-      client_secret: SP_API_CLIENT_SECRET,
+      grant_type:    'refresh_token',
+      refresh_token: REFRESH_TOKEN,
+      client_id:     CLIENT_ID,
+      client_secret: CLIENT_SECRET,
     }),
     { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
   );
@@ -66,7 +89,7 @@ async function getAccessToken() {
  */
 function createSpApiClient() {
   const client = axios.create({
-    baseURL: process.env.SP_API_ENDPOINT || 'https://sellingpartnerapi-na.amazon.com',
+    baseURL: BASE_URL,
     timeout: 15000,
   });
 
@@ -112,7 +135,7 @@ function createSpApiClient() {
         const retryCount = error.config._retryCount || 0;
         if (retryCount < 3) {
           error.config._retryCount = retryCount + 1;
-          const delay = Math.pow(2, retryCount) * 1000; // 1s, 2s, 4s
+          const delay = Math.pow(2, retryCount) * 1000;
           console.warn(`[spApiClient] 429 Rate Limit，${delay}ms 后重试（第 ${retryCount + 1} 次）`);
           await sleep(delay);
           return client(error.config);
