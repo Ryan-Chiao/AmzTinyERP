@@ -25,6 +25,7 @@ Thumbs.db
 # ── 测试覆盖率 ────────────────────────────────────
 coverage/
 
-# ── 文档（README.md 除外）────────────────────────
+# ── 文档（README.md 和 autopilot.md 除外）──────────
 *.md
 !README.md
+!.agent/workflow/autopilot.md
