@@ -1,5 +1,5 @@
 // mockService.js — mirrors real SP-API service signatures, returns mock data
-const { products, orders, syncLogs } = require('../mock/data');
+const { products, orders, syncLogs, mockChartData } = require('../mock/data');
 
 const lastSyncAt = new Date().toISOString();
 
@@ -71,4 +71,11 @@ function getDashboardStats() {
   };
 }
 
-module.exports = { getInventory, getOrders, getOrderById, getDashboardStats };
+/**
+ * TODO: aggregate from GET /orders/v0/orders (group by purchaseDate) — mock
+ */
+function getChartData() {
+  return mockChartData;
+}
+
+module.exports = { getInventory, getOrders, getOrderById, getDashboardStats, getChartData };

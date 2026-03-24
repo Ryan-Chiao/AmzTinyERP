@@ -316,4 +316,20 @@ const syncLogs = [
   },
 ];
 
-module.exports = { products, orders, syncLogs };
+// ── Chart Data ────────────────────────────────────────────────────────────────
+// Last 7 days order trend (most recent last)
+const fmtDate = (d) => {
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${mm}-${dd}`;
+};
+
+const mockChartData = {
+  orderTrend: Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(now);
+    d.setDate(d.getDate() - (6 - i));
+    return { date: fmtDate(d), orders: [3, 5, 2, 7, 4, 6, 8][i] };
+  }),
+};
+
+module.exports = { products, orders, syncLogs, mockChartData };

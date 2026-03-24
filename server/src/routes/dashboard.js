@@ -13,4 +13,15 @@ router.get('/stats', (req, res, next) => {
   }
 });
 
+// GET /api/dashboard/chart-data
+// Returns last 7 days order trend data
+router.get('/chart-data', (req, res, next) => {
+  try {
+    const data = service.getChartData();
+    res.json({ data });
+  } catch (err) {
+    next(err);
+  }
+});
+
 module.exports = router;

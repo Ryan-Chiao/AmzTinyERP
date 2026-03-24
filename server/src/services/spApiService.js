@@ -31,4 +31,11 @@ function getDashboardStats() {
   throw new Error('SP-API not yet implemented');
 }
 
-module.exports = { getInventory, getOrders, getOrderById, getDashboardStats };
+/**
+ * TODO: aggregate from GET /orders/v0/orders (group by purchaseDate)
+ */
+function getChartData() {
+  throw new Error('SP-API not yet implemented');
+}
+
+module.exports = { getInventory, getOrders, getOrderById, getDashboardStats, getChartData };
